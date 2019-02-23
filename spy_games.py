@@ -38,7 +38,6 @@ if __name__ == '__main__':
         members = 0
         for match in get_data(url, params):
             members += match['member']
-        print(f'Обработано {i+1} групп(ы) из {len(user_groups_list)}')
         if members == 0:
             no_match_groups_list.append(group)
         else:
@@ -48,19 +47,23 @@ if __name__ == '__main__':
             mutual_friends_groups_list.append(group)
         else:
             pass
-
+        if i+1 == len(user_groups_list):
+            print(f'Все {len(user_groups_list)} групп обработаны.')
+        else:
+            print(f'Осталось обработать {len(user_groups_list)-(i+1)} групп(ы) из {len(user_groups_list)} групп.')
 
     no_match_groups_info_list = list()
     for i, no_match_group in enumerate(no_match_groups_list):
         url = 'https://api.vk.com/method/groups.getById?group_ids=' + str(no_match_group) + '&fields=members_count'
         no_match_group_dict = dict()
         no_match_group_dict['name'] = get_data(url, params)[0]['name']
-        print(f'Записано имя для {i+1} группы из {len(no_match_groups_list)}')
         no_match_group_dict['gid'] = str(get_data(url, params)[0]['id'])
-        print(f'Записан id для {i + 1} группы из {len(no_match_groups_list)}')
         no_match_group_dict['members_count'] = get_data(url, params)[0]['members_count']
-        print(f'Записано количество участников для {i + 1} группы из {len(no_match_groups_list)}')
         no_match_groups_info_list.append(no_match_group_dict)
+        if i+1 == len(no_match_groups_list):
+            print(f'Все {len(no_match_groups_list)} групп(ы) без общих друзей записаны.')
+        else:
+            print(f'Осталось записать {len(no_match_groups_list)-(i+1)} групп(ы) из {len(no_match_groups_list)} групп без общих друзей.')
 
     with open('no_match_groups.json', 'w', encoding='utf-8') as f:
         json.dump(no_match_groups_info_list, f, ensure_ascii=False, indent=2)
