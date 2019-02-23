@@ -2,6 +2,17 @@ import requests
 import json
 import time
 
+
+def get_data(url, params):
+    while True:
+        response = requests.get(url, params=params).json()
+        print('-')
+        try:
+            return response['response']
+        except KeyError:
+            print('request error: ', response)
+            time.sleep(1)
+
 if __name__ == '__main__':
     token = 'ed1271af9e8883f7a7c2cefbfddfcbc61563029666c487b2f71a5227cce0d1b533c4af4c5b888633c06ae'
     # eshmargunov 171691064
@@ -10,16 +21,6 @@ if __name__ == '__main__':
         'v': '5.92',
         'access_token': token,
     }
-
-    def get_data(url, params):
-        while True:
-            response = requests.get(url, params=params).json()
-            print('-')
-            try:
-                return response['response']
-            except KeyError:
-                print('request error: ', response)
-                time.sleep(1)
 
     url = 'https://api.vk.com/method/users.get?user_ids=' + user
     user_id = get_data(url, params)[0]['id']
@@ -31,25 +32,38 @@ if __name__ == '__main__':
     user_groups_list = get_data(url, params)['items']
 
     no_match_groups_list = list()
-    for group in user_groups_list:
+    mutual_friends_groups_list = list()
+    for i, group in enumerate(user_groups_list):
         url = 'https://api.vk.com/method/groups.isMember?group_id=' + str(group) + '&user_ids=' + str(user_friends_list)
         members = 0
         for match in get_data(url, params):
             members += match['member']
+        print(f'Обработано {i+1} групп(ы) из {len(user_groups_list)}')
         if members == 0:
             no_match_groups_list.append(group)
         else:
             pass
+        if members == 4:
+            mutual_members = members
+            mutual_friends_groups_list.append(group)
+        else:
+            pass
+
 
     no_match_groups_info_list = list()
-    for no_match_group in no_match_groups_list:
+    for i, no_match_group in enumerate(no_match_groups_list):
         url = 'https://api.vk.com/method/groups.getById?group_ids=' + str(no_match_group) + '&fields=members_count'
         no_match_group_dict = dict()
         no_match_group_dict['name'] = get_data(url, params)[0]['name']
+        print(f'Записано имя для {i+1} группы из {len(no_match_groups_list)}')
         no_match_group_dict['gid'] = str(get_data(url, params)[0]['id'])
+        print(f'Записан id для {i + 1} группы из {len(no_match_groups_list)}')
         no_match_group_dict['members_count'] = get_data(url, params)[0]['members_count']
+        print(f'Записано количество участников для {i + 1} группы из {len(no_match_groups_list)}')
         no_match_groups_info_list.append(no_match_group_dict)
 
     with open('no_match_groups.json', 'w', encoding='utf-8') as f:
         json.dump(no_match_groups_info_list, f, ensure_ascii=False, indent=2)
         print('Файл записан')
+
+    print(f'Группы с {mutual_members} общими друзьями: {mutual_friends_groups_list}')
